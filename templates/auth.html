@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Locker - Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: radial-gradient(circle at 10% 20%, rgba(8, 145, 178, 0.1) 0%, rgba(8, 145, 178, 0) 90%);
+        }
+        body.dark {
+            background-image: radial-gradient(circle at 10% 20%, rgba(8, 145, 178, 0.05) 0%, rgba(8, 145, 178, 0) 90%);
+        }
+        .theme-transition * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        .password-strength-meter {
+            height: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Animation Keyframes */
+        @keyframes slideInFromRight {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutToLeft {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-50px); opacity: 0; }
+        }
+        
+        @keyframes slideInFromLeft {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOutToRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(50px); opacity: 0; }
+        }
+        
+        .slide-in-right {
+            animation: slideInFromRight 0.5s ease-out forwards;
+        }
+        
+        .slide-out-left {
+            animation: slideOutToLeft 0.5s ease-out forwards;
+        }
+        
+        .slide-in-left {
+            animation: slideInFromLeft 0.5s ease-out forwards;
+        }
+        
+        .slide-out-right {
+            animation: slideOutToRight 0.5s ease-out forwards;
+        }
+        
+        .form-container {
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+        }
+        
+        .auth-form {
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .hidden-form {
+            display: none;
+        }
+
+        /* Landscape layout for laptops */
+        @media screen and (min-width: 1024px) {
+            .landscape-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                padding: 2rem;
+            }
+            .landscape-card {
+                display: flex;
+                max-width: 900px;
+                width: 100%;
+                min-height: 500px;
+            }
+            .landscape-left {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding: 3rem;
+                background-color: rgba(2, 132, 199, 0.1);
+                border-radius: 0.75rem 0 0 0.75rem;
+                transition: transform 0.5s ease-out;
+            }
+            .landscape-right {
+                flex: 1;
+                padding: 3rem;
+                background-color: white;
+                border-radius: 0 0.75rem 0.75rem 0;
+            }
+            .dark .landscape-right {
+                background-color: rgba(30, 41, 59, 0.9);
+                backdrop-filter: blur(10px);
+            }
+            .landscape-logo {
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+            .landscape-description {
+                text-align: center;
+                margin-top: 1rem;
+            }
+            .slide-out-left-section {
+                /*transform: translateX(-100%);*/
+            }
+            .slide-in-left-section {
+                transform: translateX(0);
+            }
+            .slide-out-right-section {
+                /*transform: translateX(100%);*/
+            }
+            .slide-in-right-section {
+                transform: translateX(0);
+            }
+        }
+
+        @media screen and (max-width: 768px){
+            .landscape-container{
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100dvh !important;
+            }
+            .landscape-card{
+                width: 95% !important;
+                border: 0;
+                box-shadow: none !important;
+            }
+            .landscape-left{
+                margin: 10px;
+                /* border: 1px solid red; */
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex-direction: column !important;
+                padding: 15px 30px;
+
+                border-radius: 10px;
+            }
+            .landscape-right{
+                margin: 10px;
+                /* border: 1px solid red; */
+                /* display: flex !important; */
+                align-items: center !important;
+                justify-content: start !important;
+                flex-direction: column !important;
+            }
+
+            .form-container{
+                min-height: 300px;
+                overflow: scroll;
+            }
+
+            #auth-title{
+                text-align: center !important;
+            }
+
+            #auth-description{
+                text-align: center !important;
+            }
+
+            ::-webkit-scrollbar{
+                display: none !important;
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 theme-transition">
+    <div class="landscape-container">
+        <div class="landscape-card shadow-lg dark:shadow-slate-700/10">
+            <!-- Left side (graphic/content) -->
+            <div id="left-section" class="landscape-left bg-primary-50 dark:bg-primary-900/10">
+                <div class="landscape-logo">
+                    <div class="w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i id="auth-icon" class="fas fa-lock text-primary-600 dark:text-primary-400 text-3xl"></i>
+                    </div>
+                    <h1 id="auth-title" class="text-3xl font-bold text-primary-600 dark:text-primary-400">PDF Locker</h1>
+                    <p id="auth-description" class="text-slate-600 dark:text-slate-300 landscape-description">
+                        Secure your PDF files with password protection
+                    </p>
+                </div>
+                <div class="mt-8 text-center">
+                    <p class="text-slate-500 dark:text-slate-400">
+                        <i class="fas fa-shield-alt mr-2"></i> High encryption
+                    </p>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i> Simple drag-and-drop
+                    </p>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2">
+                        <i class="fas fa-mobile-alt mr-2"></i> Works on all devices
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right side (form) -->
+            <div class="landscape-right">
+                <!-- Theme Toggle Switch -->
+                <div class="flex justify-end mb-6">
+                    <button id="theme-toggle" type="button" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <span class="dark:hidden text-slate-700">
+                            <i class="fas fa-moon"></i>
+                        </span>
+                        <span class="hidden dark:inline text-slate-300">
+                            <i class="fas fa-sun"></i>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h1 class="text-2xl font-bold text-slate-800 dark:text-white" id="form-title">Login to PDF Locker</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2">Secure your PDF files with password protection</p>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-6">
+                        {% for category, message in messages %}
+                            {% if category == 'error' %}
+                            <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded-lg flex items-start" role="alert">
+                                <i class="fas fa-exclamation-circle mt-0.5 mr-3 text-red-500 dark:text-red-400"></i>
+                                <div>
+                                    <p class="font-bold">Error</p>
+                                    <p class="text-sm">{{ message }}</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 text-green-700 dark:text-green-300 p-4 rounded-lg flex items-start" role="alert">
+                                <i class="fas fa-check-circle mt-0.5 mr-3 text-green-500 dark:text-green-400"></i>
+                                <div>
+                                    <p class="font-bold">Success</p>
+                                    <p class="text-sm">{{ message }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Form Container -->
+                <div class="form-container">
+                    <!-- Login Form -->
+                    <form id="login-form" action="{{ url_for('login') }}" method="post" class="auth-form space-y-6">
+                        
+                        <!-- Email Input -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
+                            <input type="email" name="login-email" id="email" required
+                                   placeholder="your@email.com"
+                                   class="block w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm placeholder-slate-400 dark:placeholder-slate-500 dark:text-white
+                                          focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                                          transition">
+                        </div>
+
+                        <!-- Password Input -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Password</label>
+                            <div class="relative">
+                                <input type="password" name="login-password" id="password" required
+                                       placeholder="Enter your password"
+                                       class="block w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm placeholder-slate-400 dark:placeholder-slate-500 dark:text-white
+                                              focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                                              transition pr-10">
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div>
+                            <button type="submit"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-slate-800 transition-all">
+                                Sign In
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Signup Form -->
+                    <form id="signup-form" action="{{ url_for('signup') }}" method="post" class="auth-form hidden-form space-y-6">
+                        
+                        <!-- Email Input -->
+                        <div>
+                            <label for="signup-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
+                            <input type="email" name="signup-email" id="signup-email" required
+                                   placeholder="your@email.com"
+                                   class="block w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm placeholder-slate-400 dark:placeholder-slate-500 dark:text-white
+                                          focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                                          transition">
+                        </div>
+
+                        <!-- Password Input -->
+                        <div>
+                            <label for="signup-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Password</label>
+                            <div class="relative">
+                                <input type="password" name="signup-password" id="signup-password" required
+                                       placeholder="Create a password (min 8 characters)"
+                                       minlength="8"
+                                       class="block w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm placeholder-slate-400 dark:placeholder-slate-500 dark:text-white
+                                              focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                                              transition pr-10">
+                            </div>
+                            <div class="mt-2">
+                                <div class="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                    <span>Password strength</span>
+                                    <span id="password-strength-text">Weak</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+                                    <div id="password-strength-meter" class="bg-red-500 h-1.5 rounded-full" style="width: 20%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password Input -->
+                        <div>
+                            <label for="confirm-password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Confirm Password</label>
+                            <div class="relative">
+                                <input type="password" name="confirm-password" id="confirm-password" required
+                                       placeholder="Confirm your password"
+                                       minlength="8"
+                                       class="block w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm placeholder-slate-400 dark:placeholder-slate-500 dark:text-white
+                                              focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+                                              transition pr-10">
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div>
+                            <button type="submit"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-slate-800 transition-all"
+                                    id="submit-btn">
+                                Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Toggle Link -->
+                <div class="text-center mt-6">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        <span id="toggle-text">Don't have an account?</span> 
+                        <button id="toggle-form" class="text-primary-600 dark:text-primary-400 hover:underline focus:outline-none">
+                            Sign up
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlEl = document.documentElement;
+
+        function toggleTheme() {
+            if (htmlEl.classList.contains('dark')) {
+                htmlEl.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlEl.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Set initial theme
+        if (localStorage.getItem('theme') === 'light') {
+            htmlEl.classList.remove('dark');
+        } else {
+            htmlEl.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Form toggle functionality
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const toggleBtn = document.getElementById('toggle-form');
+        const toggleText = document.getElementById('toggle-text');
+        const formTitle = document.getElementById('form-title');
+        const leftSection = document.getElementById('left-section');
+        const authIcon = document.getElementById('auth-icon');
+        const authTitle = document.getElementById('auth-title');
+        const authDescription = document.getElementById('auth-description');
+        
+        let showingLogin = true;
+        
+        toggleBtn.addEventListener('click', function() {
+            if (showingLogin) {
+                // Switch to Signup
+                loginForm.classList.remove('slide-in-right');
+                loginForm.classList.add('slide-out-left');
+                leftSection.classList.add('slide-out-left-section');
+                
+                setTimeout(() => {
+                    loginForm.classList.add('hidden-form');
+                    signupForm.classList.remove('hidden-form');
+                    signupForm.classList.add('slide-in-right');
+                    
+                    // Update left section content
+                    authIcon.classList.remove('fa-lock');
+                    authIcon.classList.add('fa-user-plus');
+                    authTitle.textContent = "Create Account";
+                    authDescription.textContent = "Join PDF Locker today";
+                    
+                    // Update right section content
+                    formTitle.textContent = "Create Account";
+                    toggleText.textContent = "Already have an account?";
+                    toggleBtn.textContent = "Sign in";
+                    showingLogin = false;
+                    
+                    // Bring left section back
+                    leftSection.classList.remove('slide-out-left-section');
+                    leftSection.classList.add('slide-in-right-section');
+                }, 500);
+            } else {
+                // Switch to Login
+                signupForm.classList.remove('slide-in-right');
+                signupForm.classList.add('slide-out-right');
+                leftSection.classList.add('slide-out-left-section');
+                
+                setTimeout(() => {
+                    signupForm.classList.add('hidden-form');
+                    loginForm.classList.remove('hidden-form');
+                    loginForm.classList.add('slide-in-left');
+                    
+                    // Update left section content
+                    authIcon.classList.remove('fa-user-plus');
+                    authIcon.classList.add('fa-lock');
+                    authTitle.textContent = "PDF Locker";
+                    authDescription.textContent = "Secure your PDF files with password protection";
+                    
+                    // Update right section content
+                    formTitle.textContent = "Login to PDF Locker";
+                    toggleText.textContent = "Don't have an account?";
+                    toggleBtn.textContent = "Sign up";
+                    showingLogin = true;
+                    
+                    // Bring left section back
+                    leftSection.classList.remove('slide-out-right-section');
+                    leftSection.classList.add('slide-in-left-section');
+                }, 500);
+            }
+        });
+
+        // Password strength meter (for signup form)
+        const passwordInput = document.getElementById('signup-password');
+        const strengthMeter = document.getElementById('password-strength-meter');
+        const strengthText = document.getElementById('password-strength-text');
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                
+                // Length check
+                if (password.length >= 8) strength += 1;
+                if (password.length >= 12) strength += 1;
+                
+                // Character variety checks
+                if (/[A-Z]/.test(password)) strength += 1;
+                if (/[0-9]/.test(password)) strength += 1;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+                
+                // Update meter
+                let width = 20;
+                let color = 'bg-red-500';
+                let text = 'Weak';
+                
+                if (strength >= 4) {
+                    width = 100;
+                    color = 'bg-green-500';
+                    text = 'Strong';
+                } else if (strength >= 2) {
+                    width = 60;
+                    color = 'bg-yellow-500';
+                    text = 'Medium';
+                }
+                
+                strengthMeter.style.width = `${width}%`;
+                strengthMeter.className = `${color} h-1.5 rounded-full`;
+                strengthText.textContent = text;
+                
+                // Enable/disable button based on minimum length
+                if (submitBtn) {
+                    submitBtn.disabled = password.length < 8;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
