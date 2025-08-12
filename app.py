@@ -22,7 +22,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+# init_db()
 
 @app.route('/')
 def index():
@@ -83,6 +83,7 @@ def signup():
 
 @app.route('/auth')
 def auth():
+    init_db()
     return render_template('auth.html')
 
 @app.route('/logout')
